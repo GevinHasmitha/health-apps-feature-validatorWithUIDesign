@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="Referrer-Policy" value="no-referrer" />
+  <link rel="icon" href="/fhir-tools.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="FHIR Tools powered by Choreo" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&amp;display=swap"
+    rel="stylesheet">
+  <link rel="manifest" href="/manifest.json" />
+  <title>FHIR Tools</title>
+
+  <script src="/config.js"></script>
+  <script>
+    window.Config = Config;
+  </script>
+  <script>
+    var defaultCSP = `
+    default-src 'self';
+    connect-src 'self' https://api.asgardeo.io/t/wso2healthtools/oauth2/token https://api.asgardeo.io/t/wso2healthtools/oauth2/jwks ${window.Config.BFF_BASE_URL}/ http://localhost:9090/sampleResource;
+    script-src 'self' 'sha256-CEkdgZ3bDzzzB+8nF1dnqW8Cq4Y7xafzyCUZcyGB124=';
+    style-src 'self'  https://fonts.googleapis.com 'unsafe-inline'; 
+    frame-src 'self' https://api.asgardeo.io https://accounts.asgardeo.io ${window.Config.APP_AUTH_REDIRECT_BASE_URL};
+    img-src 'self'; 
+    font-src 'self' https://fonts.gstatic.com;
+    object-src 'none';
+    worker-src 'self' blob:;
+    upgrade-insecure-requests;
+    ;`
+
+    var meta = document.createElement('meta');
+    meta.httpEquiv = "Content-Security-Policy";
+    meta.content = defaultCSP;
+    document.getElementsByTagName('head')[0].appendChild(meta);
+  </script>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+
+</html>

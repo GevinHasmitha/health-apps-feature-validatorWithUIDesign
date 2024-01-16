@@ -1,0 +1,23 @@
+{
+  "algorithms": ["br", "gz"],
+  "filetypes": [
+    ".html",
+    ".js",
+    ".css",
+    ".svg",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".mp3",
+    ".wav",
+    ".tff",
+    ".woff2",
+    ".map",
+    ".json",
+    ".ts",
+    ".tsx",
+    ".md",
+    ".txt"
+  ],
+  "directory": "/dist"
+}

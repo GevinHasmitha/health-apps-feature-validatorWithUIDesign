@@ -1,0 +1,10 @@
+[package]
+org = "wso2"
+name = "bff_service"
+version = "0.1.0"
+distribution = "2201.8.1"
+authors = ["Ballerina"]
+keywords = ["Healthcare","FHIR","Tools"]
+
+[build-options]
+observabilityIncluded = true
