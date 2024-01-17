@@ -11,13 +11,16 @@ import DOMPurify from "dompurify";
 import { DarkModeContext } from "../context/DarkModeContext";
 import { HL7V2_TO_FHIR_URL } from "../../configs/Constants";
 
-import _ from 'lodash';
+import _, { set } from 'lodash';
 // import CodeMirror from "@uiw/react-codemirror";
 import { classname } from "@uiw/codemirror-extensions-classname";
 import { json } from "@codemirror/lang-json";
 import  "./FhirValidationCSS.css"
 import { ReactNode } from 'react';
 import { Alert,AlertTitle } from '@mui/material';
+import { OutputPanel } from "../execution/OutputPanel";
+import Button from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
 
 interface State {
   input: string;
@@ -372,21 +375,34 @@ export const FhirValidation = () => {
   // }
 
   const outputDisplay = (): ReactNode => {
+    const [open, setOpen] = React.useState(false);
     return  (
-     <Alert 
-        severity="error"
-        sx={{
-        width:"95%",
-          margin:"10px",
-          background:"#FFD6D6",
-          borderRadius:"10px",
-          boxShadow:"0px 4px 4px rgba(0, 0, 0, 0.1)",
-          lineHeight:"0.7",
-      }}
-     >
-       <AlertTitle>Error</AlertTitle>
-        This is a success Alert with an encouraging title.
-    </Alert>
+      <Collapse in={open} collapsedSize={70}>
+        <Alert
+          severity="error"
+          sx={{
+            width: "95%",
+            margin: "10px",
+            background: "#FFD6D6",
+            borderRadius: "10px",
+            boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.1)",
+            lineHeight: "1",
+          }}
+          action={
+            <Button color="inherit"
+              size="small"
+              onClick={() => {
+                open ? setOpen(false) : setOpen(true);
+              }}
+            >
+              Expand
+            </Button>
+          }
+        >
+        <AlertTitle>Error</AlertTitle>
+         Error message goes here Error message goes here Error message goes her
+      </Alert>
+    </Collapse>
     )
   }
 
@@ -510,6 +526,7 @@ export const FhirValidation = () => {
                 {outputDisplay()}
               </>
             </Box>
+            {/* <OutputPanel /> */}
           </>
         )}
       </Box>
