@@ -1,4 +1,6 @@
 .errorMarker{
     background-color: rgb(255, 183, 183);
   }
-  
+.selectedError{
+  background-color:rgb(255, 120, 120);
+}

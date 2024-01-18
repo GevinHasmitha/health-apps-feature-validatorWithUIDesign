@@ -36,9 +36,10 @@ export const FhirValidation = () => {
 
   const [extensions, setExtensions] = useState<any>([json()]);
   const [globalErrorData, setGlobalErrorData] = useState<string[]>([]);
+  const [globalUserInputJson, setGlobalUserInputJson] = useState<JSON>();
+  const [globalErrorLines, setGlobalErrorLines] = useState<number[]>([]);
+  
   let errorLines:number[] = [];
-  // let errorData: string[] = [];
-  // const [errorLines, setErrorLines] = useState<number[]>([]);
 
   const [windowView, setWindowView] = useState<boolean>(false);
 
@@ -286,6 +287,22 @@ export const FhirValidation = () => {
     },
   });
 
+  const scrollToErrorLine=(userInputJson: JSON, scrollLine : number)=>{
+
+    const jsonString = JSON.stringify(userInputJson, null, 2);
+    const lines = jsonString.split('\n');
+    const scroller = document.getElementsByClassName("cm-scroller")[0];
+
+    if (scroller) {
+      const totalLines = lines.length;/* total number of lines in the json */
+      const totalHeight = scroller.scrollHeight;
+      const singleLineHeight = totalHeight / totalLines;
+  
+      scroller.scrollTop = (singleLineHeight * scrollLine)-22;
+    }
+  }  
+
+
 
   const callBackend = async (): Promise<string[]>  => {
     let errorData:string[]= [];
@@ -331,21 +348,6 @@ export const FhirValidation = () => {
   };
 
 
-  const scrollToErrorLine=(userInputJson: JSON)=>{
-
-    const jsonString = JSON.stringify(userInputJson, null, 2);
-    const lines = jsonString.split('\n');
-
-    const scroller = document.getElementsByClassName("cm-scroller")[0];
-    console.log(scroller);
-    if (scroller) {
-      const totalLines = lines.length;/* total number of lines in the json */
-      const totalHeight = scroller.scrollHeight;
-      const singleLineHeight = totalHeight / totalLines;
-  
-      scroller.scrollTop = (singleLineHeight * (errorLines[0]+1))-20;
-    }
-  }  
 
   const handleSubmit =  async () => {
 
@@ -378,21 +380,6 @@ export const FhirValidation = () => {
     findErrorLines(userInputJson, errorLines);
     console.log(errorLines);
 
-    //For displaying the error messages(FOR TESTING PURPOSES)
-    //====================================================
-    let newOutput = "";
-    for(let i=0; i<errorData.length; i++){
-      newOutput += "\n" + JSON.stringify(errorData[i] + "\n");
-    }  
-    setState((prevState) =>({
-      ...prevState,
-      output: newOutput
-    }));
-    //======================================================
-
-    //Scrolling to the line with error
-    scrollToErrorLine(userInputJson);
-
     //Highlighting the lines with errors
     if (!errorData && missingFields === false) {
       setExtensions([json()]); //Hides the line highlights when succesful
@@ -403,6 +390,8 @@ export const FhirValidation = () => {
     if (errorData.length !== 0) {
       setWindowView(true);
       displayErrorMessages(errorData);
+      setGlobalUserInputJson(userInputJson);
+      setGlobalErrorLines(errorLines);
     }
 
 
@@ -411,9 +400,34 @@ export const FhirValidation = () => {
 
 
  //===============================================================
+  interface DisplayAlertProps{
+    message: string;
+    key: number;
+  }
 
-  const DisplayAlert= ({ message }: { message: string }): ReactNode => {
+  const DisplayAlert= ({ message, key }:DisplayAlertProps): ReactNode => {
     const [open, setOpen] = React.useState(false);
+
+    const match = message.match(/Line (\d+)/);   //Gets the line number from the error message
+    const errorLineNumber = match ? match[1] : null;
+
+    const jumpToError= () => {
+      if(globalUserInputJson && errorLineNumber){
+      scrollToErrorLine(globalUserInputJson,parseInt(errorLineNumber));
+      
+      errorLines = globalErrorLines;
+
+      const selectedClassnameExt = classname({
+        add: (lineNumber) => {
+            if (parseInt(errorLineNumber) === lineNumber) {
+              return "selectedError";
+            }         
+        },
+      });
+       setExtensions([classnameExt, json(), selectedClassnameExt]);
+      
+      }
+    }
     return  (
       <Collapse in={open} collapsedSize={75}>
         <Alert
@@ -422,14 +436,15 @@ export const FhirValidation = () => {
             width: "95%",
             margin: "10px",
             background: "#FFD6D6",
-           //borderRadius: "10px",
             boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.1)",
-           //lineHeight: "1",
+            cursor: "pointer",
           }}
+          onClick={jumpToError}
           action={
             <Button color="inherit"
               size="small"
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 open ? setOpen(false) : setOpen(true);
               }}
             >
@@ -452,8 +467,6 @@ export const FhirValidation = () => {
                 pb: 1,
                 mt: 5,
                 width: "50%",
-                // border: 1,
-                // borderColor: "grey.500",
                 overflow: "auto",
                 height:"calc(100vh - 197px)"
               }}
@@ -471,8 +484,8 @@ export const FhirValidation = () => {
                     }
                   />
                 )}
-                 {globalErrorData.map((item) => (
-                    <DisplayAlert message={item}/>
+                 {globalErrorData.map((item, index) => (
+                    <DisplayAlert message={item} key={index}/>
                  ))}
 
 
