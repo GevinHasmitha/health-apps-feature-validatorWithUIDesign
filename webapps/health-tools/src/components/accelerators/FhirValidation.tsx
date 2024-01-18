@@ -18,9 +18,9 @@ import { json } from "@codemirror/lang-json";
 import  "./FhirValidationCSS.css"
 import { ReactNode } from 'react';
 import { Alert,AlertTitle } from '@mui/material';
-import { OutputPanel } from "../execution/OutputPanel";
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
+import { error } from "console";
 
 interface State {
   input: string;
@@ -35,8 +35,12 @@ interface State {
 export const FhirValidation = () => {
 
   const [extensions, setExtensions] = useState<any>([json()]);
-  var errorLines:number[] = [];
+  const [globalErrorData, setGlobalErrorData] = useState<string[]>([]);
+  let errorLines:number[] = [];
+  // let errorData: string[] = [];
   // const [errorLines, setErrorLines] = useState<number[]>([]);
+
+  const [windowView, setWindowView] = useState<boolean>(false);
 
   const [state, setState] = useState<State>({
     input: "",
@@ -306,12 +310,23 @@ export const FhirValidation = () => {
   };
 
 
-  const handleSubmit =  async () => {
-    // setState((prevState) => ({
-    //   ...prevState,
-    //   isError: true,
+  const scrollToErrorLine=(userInputJson: JSON)=>{
 
-    // }));
+    const jsonString = JSON.stringify(userInputJson, null, 2);
+    const lines = jsonString.split('\n');
+
+    const scroller = document.getElementsByClassName("cm-scroller")[0];
+    console.log(scroller);
+    if (scroller) {
+      const totalLines = lines.length;/* total number of lines in the json */
+      const totalHeight = scroller.scrollHeight;
+      const singleLineHeight = totalHeight / totalLines;
+  
+      scroller.scrollTop = (singleLineHeight * (errorLines[0]+1))-20;
+    }
+  }  
+
+  const handleSubmit =  async () => {
 
     let userInputJson;
     try {
@@ -325,6 +340,7 @@ export const FhirValidation = () => {
     if(errorData.length == 0){
       console.log("Validation Successful")
       setExtensions([json()]);
+      setWindowView(false);  //So that the alert boxes are not displayed
       return;
     }
     console.log(errorData);
@@ -353,13 +369,8 @@ export const FhirValidation = () => {
     }));
     //======================================================
 
-
-// setState((prevState) =>({
-//   ...prevState,
-//   output: JSON.stringify(errorData)
-// }))
-
-    // console.log(JSON.stringify(userInputJson, null, 2));
+    //Scrolling to the line with error
+    scrollToErrorLine(userInputJson);
 
     //Highlighting the lines with errors
     if (!errorData && missingFields === false) {
@@ -368,25 +379,31 @@ export const FhirValidation = () => {
       setExtensions([classnameExt, json()]); //Highlights the lines when having errors
     }
 
+    if (errorData.length !== 0) {
+      setWindowView(true);
+      setGlobalErrorData(errorData);
+    }
+
+
 
   }
-  // function getGreeting(name: string): ReactNode {
-  //   return <h1>Hello, {name}!</h1>;
-  // }
 
-  const outputDisplay = (): ReactNode => {
+
+ //===============================================================
+
+  const DisplayAlert= ({ message }: { message: string }): ReactNode => {
     const [open, setOpen] = React.useState(false);
     return  (
-      <Collapse in={open} collapsedSize={70}>
+      <Collapse in={open} collapsedSize={75}>
         <Alert
           severity="error"
           sx={{
             width: "95%",
             margin: "10px",
             background: "#FFD6D6",
-            borderRadius: "10px",
+           //borderRadius: "10px",
             boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.1)",
-            lineHeight: "1",
+           //lineHeight: "1",
           }}
           action={
             <Button color="inherit"
@@ -400,11 +417,50 @@ export const FhirValidation = () => {
           }
         >
         <AlertTitle>Error</AlertTitle>
-         Error message goes here Error message goes here Error message goes her
+         {message}
       </Alert>
     </Collapse>
     )
   }
+
+  const changeView = () => {
+    return(
+        <Box
+              sx={{
+                pl: 1,
+                pb: 1,
+                mt: 5,
+                width: "50%",
+                // border: 1,
+                // borderColor: "grey.500",
+                overflow: "auto",
+                height:"calc(100vh - 197px)"
+              }}
+              id="box-fhir-resource-box"
+              aria-label="FHIR Resource Box"
+            >
+              <>
+                {isError && (
+                  <ErrorDisplay
+                    statusCode={statusCode}
+                    message={
+                      statusCode == "429"
+                        ? THROTTLED_OUT_PAGE_TITLE
+                        : errorMessage
+                    }
+                  />
+                )}
+                 {globalErrorData.map((item) => (
+                    <DisplayAlert message={item}/>
+                 ))}
+
+
+              </>
+            </Box> 
+    )
+  };
+
+ 
 
   const inputEditor = (
     <CodeEditor
@@ -463,6 +519,7 @@ export const FhirValidation = () => {
         sx={{
           display: "flex",
           flexGrow: 1,
+          justifyContent: "center",
         }}
         marginTop={5}
       >
@@ -485,48 +542,15 @@ export const FhirValidation = () => {
               sx={{
                 pr: 1,
                 pb: 1,
-                width: "50%",
+                // width: "85%",
+                width: windowView ===true ?  "50%" : "85%",
               }}
               id="box-hl7-resource-box"
               aria-label="HL7 Resource Box"
             >
               {inputEditor}
             </Box>
-            <Box
-              sx={{
-                pl: 1,
-                pb: 1,
-                width: "50%",
-                border: 1,
-                borderColor: "grey.500",
-                overflow: "auto",
-                height:"300px",
-              }}
-              id="box-fhir-resource-box"
-              aria-label="FHIR Resource Box"
-            >
-              <>
-                {isError && (
-                  <ErrorDisplay
-                    statusCode={statusCode}
-                    message={
-                      statusCode == "429"
-                        ? THROTTLED_OUT_PAGE_TITLE
-                        : errorMessage
-                    }
-                  />
-                )}
-                {outputDisplay()}
-                {outputDisplay()}
-                {outputDisplay()}
-                {outputDisplay()}
-                {outputDisplay()}
-                {outputDisplay()}
-                {outputDisplay()}
-                {outputDisplay()}
-              </>
-            </Box>
-            {/* <OutputPanel /> */}
+            {windowView==true ? changeView() : null}
           </>
         )}
       </Box>
