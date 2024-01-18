@@ -255,6 +255,27 @@ export const FhirValidation = () => {
     }
   }
 
+  const displayErrorMessages = (errorData : string[]) => {
+    setGlobalErrorData([]);
+    let j=0;
+    for(let i=0; i< errorData.length; i++){
+      if (
+        errorData[i].includes("Missing required field") ||
+        errorData[i].includes("Resource type is invalid") ||
+        errorData[i].includes("Missing required Element") ||
+        errorData[i].includes("may be missing or invalid or it's value invalid")
+      ) {
+        // document.getElementById("errorMsg").innerHTML += `<b>${errorData[i]}<br><br><b>`;
+        setGlobalErrorData((prevState) => [...prevState, errorData[i]]);
+      } else {
+        // document.getElementById("errorMsg").innerHTML += `<b>Line ${errorLines[j] + 1}) ${errorData[i]}<br><br><b>`;
+        const errorMessage = `Line ${errorLines[j] + 1}) ${errorData[i]}`;
+        setGlobalErrorData((prevState) =>[...prevState,errorMessage]);
+        j++;
+      }
+    }
+  }
+
   const classnameExt = classname({
     add: (lineNumber) => {
       for (const line of errorLines) {
@@ -381,7 +402,7 @@ export const FhirValidation = () => {
 
     if (errorData.length !== 0) {
       setWindowView(true);
-      setGlobalErrorData(errorData);
+      displayErrorMessages(errorData);
     }
 
 
