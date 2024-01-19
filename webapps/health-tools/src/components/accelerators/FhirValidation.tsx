@@ -12,7 +12,6 @@ import { DarkModeContext } from "../context/DarkModeContext";
 import { HL7V2_TO_FHIR_URL } from "../../configs/Constants";
 
 import _, { set } from 'lodash';
-// import CodeMirror from "@uiw/react-codemirror";
 import { classname } from "@uiw/codemirror-extensions-classname";
 import { json } from "@codemirror/lang-json";
 import  "./FhirValidationCSS.css"
@@ -20,7 +19,6 @@ import { ReactNode } from 'react';
 import { Alert,AlertTitle } from '@mui/material';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
-import { error } from "console";
 
 interface State {
   input: string;
@@ -38,10 +36,10 @@ export const FhirValidation = () => {
   const [globalErrorData, setGlobalErrorData] = useState<string[]>([]);
   const [globalUserInputJson, setGlobalUserInputJson] = useState<JSON>();
   const [globalErrorLines, setGlobalErrorLines] = useState<number[]>([]);
-  
+  const [windowView, setWindowView] = useState<boolean>(false);
   let errorLines:number[] = [];
 
-  const [windowView, setWindowView] = useState<boolean>(false);
+
 
   const [state, setState] = useState<State>({
     input: "",
@@ -136,7 +134,6 @@ export const FhirValidation = () => {
       let pattern = /Invalid field '([^']*)'/;
       const patternMatch = data.match(pattern);
       if (patternMatch && patternMatch.length === 2){
-      //  console.log(patternMatch[1]);
        userInputJson = addPrefixToMatchingKey(userInputJson, patternMatch[1]);
       }
     }
@@ -257,7 +254,7 @@ export const FhirValidation = () => {
   }
 
   const displayErrorMessages = (errorData : string[]) => {
-    setGlobalErrorData([]);
+    setGlobalErrorData([]); //Clears the error messages from the previous validation
     let j=0;
     for(let i=0; i< errorData.length; i++){
       if (
@@ -362,13 +359,12 @@ export const FhirValidation = () => {
     let errorData: string[] = await callBackend();
     if(errorData.length == 0){
       console.log("Validation Successful")
-      setExtensions([json()]);
-      setWindowView(false);  //So that the alert boxes are not displayed
+      setExtensions([json()]);  //Removes the line highlighting if added
+      setWindowView(false);     //So that the alert boxes are not displayed
       return;
     }
     console.log(errorData);
 
-    // console.log(input);
     const missingFields = checkForMissingFields(errorData);
 
     userInputJson = validateInvalidFields(errorData, userInputJson);
@@ -378,7 +374,6 @@ export const FhirValidation = () => {
     userInputJson = validateDateTime(errorData, userInputJson);
 
     findErrorLines(userInputJson, errorLines);
-    console.log(errorLines);
 
     //Highlighting the lines with errors
     if (!errorData && missingFields === false) {
@@ -402,10 +397,9 @@ export const FhirValidation = () => {
  //===============================================================
   interface DisplayAlertProps{
     message: string;
-    key: number;
   }
 
-  const DisplayAlert= ({ message, key }:DisplayAlertProps): ReactNode => {
+  const DisplayAlert= ({ message }:DisplayAlertProps): ReactNode => {
     const [open, setOpen] = React.useState(false);
 
     const match = message.match(/Line (\d+)/);   //Gets the line number from the error message
@@ -576,7 +570,6 @@ export const FhirValidation = () => {
               sx={{
                 pr: 1,
                 pb: 1,
-                // width: "85%",
                 width: windowView ===true ?  "50%" : "85%",
               }}
               id="box-hl7-resource-box"
