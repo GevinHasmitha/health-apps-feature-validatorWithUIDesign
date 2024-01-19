@@ -37,6 +37,7 @@ export const FhirValidation = () => {
   const [globalUserInputJson, setGlobalUserInputJson] = useState<JSON>();
   const [globalErrorLines, setGlobalErrorLines] = useState<number[]>([]);
   const [windowView, setWindowView] = useState<boolean>(false);
+  const [validationState, setValidationState] = useState<boolean>(false);
   let errorLines:number[] = [];
 
 
@@ -76,6 +77,7 @@ export const FhirValidation = () => {
   const { darkMode, setDarkMode } = useContext(DarkModeContext);
 
   const handleInputChange = useCallback((value: string) => {
+    setValidationState(false);  //So that the the success alert reset each time input changes
     setState((prevState) => ({
       ...prevState,
       input: value,
@@ -361,6 +363,7 @@ export const FhirValidation = () => {
       console.log("Validation Successful")
       setExtensions([json()]);  //Removes the line highlighting if added
       setWindowView(false);     //So that the alert boxes are not displayed
+      setValidationState(true);  //So that the the success alert is displayed
       return;
     }
     console.log(errorData);
@@ -384,6 +387,7 @@ export const FhirValidation = () => {
 
     if (errorData.length !== 0) {
       setWindowView(true);
+      setValidationState(false);
       displayErrorMessages(errorData);
       setGlobalUserInputJson(userInputJson);
       setGlobalErrorLines(errorLines);
@@ -395,11 +399,38 @@ export const FhirValidation = () => {
 
 
  //===============================================================
+  const DisplaySuccessAlert = () => {
+    const [open, setOpen] = React.useState(true);
+    return (
+      <Collapse in={open} collapsedSize={0}>
+      <Alert
+        severity="success"
+        sx={{ 
+          background: "#D6FFD6",
+        }}
+        action={
+          <Button color="inherit"
+            size="small"
+            onClick={() => {
+              open ? setOpen(false) : setOpen(true);
+            }}
+      >
+            <b>Close</b>
+          </Button>
+        }
+        >
+        <AlertTitle>Success</AlertTitle>
+          Validation Successful!
+      </Alert>
+      </Collapse>
+    )
+  }
+
   interface DisplayAlertProps{
     message: string;
   }
 
-  const DisplayAlert= ({ message }:DisplayAlertProps): ReactNode => {
+  const DisplayErrorAlert= ({ message }:DisplayAlertProps): ReactNode => {
     const [open, setOpen] = React.useState(false);
 
     const match = message.match(/Line (\d+)/);   //Gets the line number from the error message
@@ -479,7 +510,7 @@ export const FhirValidation = () => {
                   />
                 )}
                  {globalErrorData.map((item, index) => (
-                    <DisplayAlert message={item} key={index}/>
+                    <DisplayErrorAlert message={item} key={index}/>
                  ))}
 
 
@@ -543,6 +574,7 @@ export const FhirValidation = () => {
       maxWidth={false}
       sx={{ display: "flex", flexDirection: "column", height: 1, mt: 0 }}
     >
+      
       <Box
         sx={{
           display: "flex",
@@ -571,13 +603,15 @@ export const FhirValidation = () => {
                 pr: 1,
                 pb: 1,
                 width: windowView ===true ?  "50%" : "85%",
+                height: "100%",
               }}
               id="box-hl7-resource-box"
               aria-label="HL7 Resource Box"
             >
-              {inputEditor}
+             {validationState === true ? <DisplaySuccessAlert/> : null}
+             {inputEditor}
             </Box>
-            {windowView==true ? changeView() : null}
+            {windowView === true ? changeView() : null}
           </>
         )}
       </Box>
