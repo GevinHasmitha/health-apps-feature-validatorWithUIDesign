@@ -297,7 +297,13 @@ export const FhirValidation = () => {
       const totalHeight = scroller.scrollHeight;
       const singleLineHeight = totalHeight / totalLines;
   
-      scroller.scrollTop = (singleLineHeight * scrollLine)-22;
+      const targetY = (singleLineHeight * scrollLine)-22;
+
+      scroller.scrollTo({
+        top: targetY,
+        behavior: 'smooth'
+      });
+
     }
   }  
 
