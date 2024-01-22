@@ -1,5 +1,4 @@
 import { Box, Container } from "@mui/material";
-import { isError } from "util";
 import { THROTTLED_OUT_PAGE_TITLE } from "../../configs/TextConstants";
 import LoginOverlay from "../authentication/LoginOverlay";
 import ErrorDisplay from "../error/ErrorDisplay";
@@ -9,7 +8,6 @@ import { CodeEditor } from "../execution/CodeEditor";
 import { HttpRequestConfig, useAuthContext } from "@asgardeo/auth-react";
 import DOMPurify from "dompurify";
 import { DarkModeContext } from "../context/DarkModeContext";
-import { HL7V2_TO_FHIR_URL } from "../../configs/Constants";
 
 import _, { set } from 'lodash';
 import { classname } from "@uiw/codemirror-extensions-classname";
