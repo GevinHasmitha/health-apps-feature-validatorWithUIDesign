@@ -355,6 +355,8 @@ export const FhirValidation = () => {
       userInputJson = JSON.parse(input);
     } catch (error:any) {
       console.log(`Invalid JSON format: ${error.message}`)
+      setWindowView(true);
+      setGlobalErrorData([`Invalid JSON format: ${error.message}`])
       return;
     }
 
@@ -540,7 +542,7 @@ export const FhirValidation = () => {
       id="comp-fhir-validation-input-editor"
       aria-label="HL7 Resource Editor"
       isDisabled={!isAuthenticated}
-      executeButtonToolTipText="Perform transformation"
+      executeButtonToolTipText="Validate FHIR Resource"
       acceptFileTypes=".txt"
       extensions={extensions}
     />
