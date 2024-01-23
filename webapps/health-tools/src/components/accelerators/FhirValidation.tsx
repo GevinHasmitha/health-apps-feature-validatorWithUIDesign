@@ -8,7 +8,6 @@ import { CodeEditor } from "../execution/CodeEditor";
 import { HttpRequestConfig, useAuthContext } from "@asgardeo/auth-react";
 import DOMPurify from "dompurify";
 import { DarkModeContext } from "../context/DarkModeContext";
-
 import _, { set } from 'lodash';
 import { classname } from "@uiw/codemirror-extensions-classname";
 import { json } from "@codemirror/lang-json";
@@ -36,12 +35,6 @@ interface State {
 
 export const FhirValidation = () => {
 
-  //const [extensions, setExtensions] = useState<any>([json()]);
- // const [globalErrorData, setGlobalErrorData] = useState<string[]>([]);
-//  const [globalUserInputJson, setGlobalUserInputJson] = useState<JSON>();
- // const [globalErrorLines, setGlobalErrorLines] = useState<number[]>([]);
- // const [windowView, setWindowView] = useState<boolean>(false);
-//  const [validationState, setValidationState] = useState<boolean>(false);
   let errorLines:number[] = [];
 
 
@@ -86,7 +79,6 @@ export const FhirValidation = () => {
   const { darkMode, setDarkMode } = useContext(DarkModeContext);
 
   const handleInputChange = useCallback((value: string) => {
- //   setValidationState(false);  //So that the the success alert reset each time input changes
     setState((prevState) => ({
       ...prevState,
       validationState: false,   //So that the the success alert reset each time input changes
@@ -133,7 +125,6 @@ export const FhirValidation = () => {
       let pattern = /Missing required field '([^']+)'/;
       const patternMatch = data.match(pattern);
       if (patternMatch && patternMatch.length === 2){
-        // console.log(patternMatch[1]);
         return true;
       }
     }
@@ -149,6 +140,7 @@ export const FhirValidation = () => {
        userInputJson = addPrefixToMatchingKey(userInputJson, patternMatch[1]);
       }
     }
+    //console.log(JSON.stringify(userInputJson));
     return userInputJson;
   }
 
@@ -242,11 +234,11 @@ export const FhirValidation = () => {
 
 
   const findErrorLines=(userInputJson:JSON, errorLines:number[]) =>{
-    let jsonStringg = JSON.stringify(userInputJson, null, 2); // 2 is the number of spaces for indentation
+    let jsonString = JSON.stringify(userInputJson, null, 2); // 2 is the number of spaces for indentation
 
     //Finds error locations by getting the line numbers where $$ is present
-    if (jsonStringg) {
-      let linesArr = jsonStringg.split("\n");
+    if (jsonString) {
+      let linesArr = jsonString.split("\n");
 
       for (let i = 0; i < linesArr.length; i++) {
         if (linesArr[i].includes("$$")) {
@@ -255,22 +247,15 @@ export const FhirValidation = () => {
       //    setErrorLines((prevState) => [...prevState, i]);
         }
       }
-      let modifiedJsonStringg = linesArr.join("\n");
-      //  document.getElementById('content').innerHTML = `<pre>${modifiedJsonStringg}</pre>`;
-      // setValue(modifiedJsonStringg);
+      let modifiedJsonString = linesArr.join("\n");
       setState((prevState) =>({
         ...prevState,
-        input: modifiedJsonStringg
+        input: modifiedJsonString
       }))
     }
   }
 
   const displayErrorMessages = (errorData : string[]) => {
- //   setGlobalErrorData([]); //Clears the error messages from the previous validation
-    // setState((prevState)=>({  //Clears the error messages from the previous validation
-    //   ...prevState,
-    //   globalErrorData: []
-    // }))
     let j=0;
     for(let i=0; i< errorData.length; i++){
       if (
@@ -287,9 +272,8 @@ export const FhirValidation = () => {
 
 
       } else {
-        // document.getElementById("errorMsg").innerHTML += `<b>Line ${errorLines[j] + 1}) ${errorData[i]}<br><br><b>`;
         const errorMessage = `Line ${errorLines[j] + 1}) ${errorData[i]}`;
-   //     setGlobalErrorData((prevState) =>[...prevState,errorMessage]);
+     //  setGlobalErrorData((prevState) =>[...prevState,errorMessage]);
         setState((prevState) => ({
           ...prevState,
           globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, errorMessage] : [errorMessage]
@@ -389,8 +373,6 @@ export const FhirValidation = () => {
       userInputJson = JSON.parse(input);
     } catch (error:any) {
       console.log(`Invalid JSON format: ${error.message}`)
-     // setWindowView(true);
-   //   setGlobalErrorData([`Invalid JSON format: ${error.message}`])
       setState((prevState)=>({
         ...prevState,
         globalErrorData: [`Invalid JSON format: ${error.message}`],
@@ -401,16 +383,13 @@ export const FhirValidation = () => {
 
     let errorData: string[] = await callBackend();
     if(errorData.length == 0){
-      console.log("Validation Successful")
-      //setExtensions([json()]);  //Removes the line highlighting if added
+      console.log("Validation Successful");
       setState((prevState)=>({
         ...prevState,
-        extensions: [json()],
-        windowView: false,
-        validationState: true
-      }))
-    //  setWindowView(false);     //So that the alert boxes are not displayed
-    //  setValidationState(true);  //So that the the success alert is displayed
+        extensions: [json()],     
+        windowView: false,        //So that the alert boxes are not displayed
+        validationState: true     //So that the the success alert is displayed
+      }));
       return;
     }
     console.log(errorData);
@@ -427,26 +406,19 @@ export const FhirValidation = () => {
 
     //Highlighting the lines with errors
     if (!errorData && missingFields === false) {
-    //  setExtensions([json()]); //Hides the line highlights when succesful
       setState((prevState)=>({
         ...prevState,
-        extensions: [json()]
-      }))
-      
+        extensions: [json()]   //Hides the line highlights when succesful
+      }));   
     } else {
-    //  setExtensions([classnameExt, json()]); //Highlights the lines when having errors
       setState((prevState)=>({
         ...prevState,
-        extensions: [classnameExt, json()]
-      }))
+        extensions: [classnameExt, json()]  //Highlights the lines when having errors
+      }));
     }
 
     if (errorData.length !== 0) {
- //     setWindowView(true);
-      //setValidationState(false);
       displayErrorMessages(errorData);
-      //setGlobalUserInputJson(userInputJson);
-      //setGlobalErrorLines(errorLines);
       setState((prevState)=>({
         ...prevState,
         globalUserInputJson: userInputJson,
@@ -514,7 +486,6 @@ export const FhirValidation = () => {
             }         
         },
       });
-     //  setExtensions([classnameExt, json(), selectedClassnameExt]);
        setState((prevState)=>({
         ...prevState,
         extensions: [classnameExt, json(), selectedClassnameExt]
@@ -560,7 +531,7 @@ export const FhirValidation = () => {
                 pl: 1,
                 pb: 1,
                 mt: 5,
-                width: "50%",
+                width: screenWidth >= 900 ? "50%" : "100%",
                 overflow: "auto",
                 height:"calc(100vh - 197px)"
               }}
@@ -581,7 +552,6 @@ export const FhirValidation = () => {
                  {state.globalErrorData && state.globalErrorData.map((item, index) => (
                     <DisplayErrorAlert message={item} key={index}/>
                  ))}
-
 
               </>
             </Box> 
@@ -614,36 +584,12 @@ export const FhirValidation = () => {
       extensions={state.extensions}
     />
   );
-
-  const outputEditor = (
-    <CodeEditor
-      title="Result"
-      value={output}
-      readOnly
-      darkMode={darkMode}
-      onClear={handleOutputClear}
-      placeholder={
-        isLoading ? "Loading..." : "FHIR Resource will be displayed here..."
-      }
-      fileType={outputType}
-      downloadEnabled
-      downloadName="hl7-to-fhir-output"
-      clearEnabled
-      width="100%"
-      height="calc(100vh - 197px)"
-      id="comp-hl7-to-fhir-output-editor"
-      aria-label="FHIR Resource Editor"
-      isDisabled={!isAuthenticated}
-      isLoading={isLoading}
-    />
-  );
   return (
     <Container
       id="hl7v2-to-fhir-container"
       maxWidth={false}
       sx={{ display: "flex", flexDirection: "column", height: 1, mt: 0 }}
     >
-      
       <Box
         sx={{
           display: "flex",
@@ -656,7 +602,7 @@ export const FhirValidation = () => {
           <>
             <BasicTabs
               inputEditor={inputEditor}
-              outputEditor={outputEditor}
+              outputEditor={state.validationState === true ? <DisplaySuccessAlert/> : changeView()}
               isInterectable={isAuthenticated}
               statusCode={statusCode}
               isError={isError}
