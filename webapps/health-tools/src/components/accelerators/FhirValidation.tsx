@@ -150,25 +150,28 @@ export const FhirValidation = () => {
       const patternMatch = data.match(pattern);
       if (patternMatch && patternMatch.length === 2){
       //  console.log(patternMatch[1]);
-        modifyInvalidValues(userInputJson, patternMatch[1]);
+        userInputJson= modifyInvalidValues(userInputJson, patternMatch[1]);
       }
      }
+     return userInputJson;
   }
 
   const validateDateTime=(errorData:string[],userInputJson:JSON):JSON => {
     for (let data of errorData){
-      let pattern =/Invalid pattern \(constraint\) for field '([^']*)'/;
+      //If the error is nested, it will contain path
+      let pattern = /Invalid pattern \(constraint\) for field '([^']*)'/;
       const patternMatch = data.match(pattern);
       if (patternMatch && patternMatch.length === 2){
-       console.log(patternMatch[1]);
-       userInputJson = addPrefixToMatchingKey(userInputJson, patternMatch[1]);
+        console.log(patternMatch[1]);
+        console.log("After modifying invalid value")
+        userInputJson = modifyInvalidValues(userInputJson, patternMatch[1])
       }
-     }
+    }
      return userInputJson;
     }
 
 
-  const modifyInvalidValues=(userInputJson:JSON, fieldvalue:string) =>{
+  const modifyInvalidValues=(userInputJson:JSON, fieldvalue:string):JSON =>{
     /*If the error is created by a value, below code is used to navigate to that field. Then it will directly 
       add $$ to that value, so calling the addPrefixToMatchingKey function is not needed (this can be done because if the error
       is with a value, the error message will contain the path, if it is with a key, we have to use the 
@@ -189,6 +192,7 @@ export const FhirValidation = () => {
         console.error(error);
       }
     }
+    return userInputJson;
   }
 
   const addPrefixToMatchingKey=(obj:any, searchString:string)=> {
@@ -398,7 +402,7 @@ export const FhirValidation = () => {
 
     userInputJson = validateInvalidFields(errorData, userInputJson);
 
-    validateInvalidValues(errorData, userInputJson);
+    userInputJson = validateInvalidValues(errorData, userInputJson);
 
     userInputJson = validateDateTime(errorData, userInputJson);
 
