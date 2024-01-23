@@ -26,18 +26,23 @@ interface State {
   isLoading: boolean;
   outputType: string;
   statusCode: string;
+  extensions: any;
+  globalErrorData: string[];
+  globalUserInputJson: any; //Because an issue arises when initializing state with JSON
+  globalErrorLines: number[];
+  windowView: boolean;
+  validationState: boolean;
 }
 
 export const FhirValidation = () => {
 
-  const [extensions, setExtensions] = useState<any>([json()]);
-  const [globalErrorData, setGlobalErrorData] = useState<string[]>([]);
-  const [globalUserInputJson, setGlobalUserInputJson] = useState<JSON>();
-  const [globalErrorLines, setGlobalErrorLines] = useState<number[]>([]);
-  const [windowView, setWindowView] = useState<boolean>(false);
-  const [validationState, setValidationState] = useState<boolean>(false);
+  //const [extensions, setExtensions] = useState<any>([json()]);
+ // const [globalErrorData, setGlobalErrorData] = useState<string[]>([]);
+//  const [globalUserInputJson, setGlobalUserInputJson] = useState<JSON>();
+ // const [globalErrorLines, setGlobalErrorLines] = useState<number[]>([]);
+ // const [windowView, setWindowView] = useState<boolean>(false);
+//  const [validationState, setValidationState] = useState<boolean>(false);
   let errorLines:number[] = [];
-
 
 
   const [state, setState] = useState<State>({
@@ -48,6 +53,12 @@ export const FhirValidation = () => {
     isLoading: false,
     outputType: "json",
     statusCode: "500",
+    extensions: [json()],
+    globalErrorData: [],
+    globalUserInputJson: {},
+    globalErrorLines: [],
+    windowView: false,
+    validationState: false
   });
 
   const { state: authState, httpRequest } = useAuthContext();
@@ -75,9 +86,10 @@ export const FhirValidation = () => {
   const { darkMode, setDarkMode } = useContext(DarkModeContext);
 
   const handleInputChange = useCallback((value: string) => {
-    setValidationState(false);  //So that the the success alert reset each time input changes
+ //   setValidationState(false);  //So that the the success alert reset each time input changes
     setState((prevState) => ({
       ...prevState,
+      validationState: false,   //So that the the success alert reset each time input changes
       input: value,
     }));
   }, []);
@@ -254,7 +266,11 @@ export const FhirValidation = () => {
   }
 
   const displayErrorMessages = (errorData : string[]) => {
-    setGlobalErrorData([]); //Clears the error messages from the previous validation
+ //   setGlobalErrorData([]); //Clears the error messages from the previous validation
+    // setState((prevState)=>({  //Clears the error messages from the previous validation
+    //   ...prevState,
+    //   globalErrorData: []
+    // }))
     let j=0;
     for(let i=0; i< errorData.length; i++){
       if (
@@ -263,12 +279,21 @@ export const FhirValidation = () => {
         errorData[i].includes("Missing required Element") ||
         errorData[i].includes("may be missing or invalid or it's value invalid")
       ) {
-        // document.getElementById("errorMsg").innerHTML += `<b>${errorData[i]}<br><br><b>`;
-        setGlobalErrorData((prevState) => [...prevState, errorData[i]]);
+     //   setGlobalErrorData((prevState) => [...prevState, errorData[i]]);
+        setState((prevState) => ({
+          ...prevState,
+          globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, errorData[i]] : [errorData[i]]
+        }));
+
+
       } else {
         // document.getElementById("errorMsg").innerHTML += `<b>Line ${errorLines[j] + 1}) ${errorData[i]}<br><br><b>`;
         const errorMessage = `Line ${errorLines[j] + 1}) ${errorData[i]}`;
-        setGlobalErrorData((prevState) =>[...prevState,errorMessage]);
+   //     setGlobalErrorData((prevState) =>[...prevState,errorMessage]);
+        setState((prevState) => ({
+          ...prevState,
+          globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, errorMessage] : [errorMessage]
+        }));
         j++;
       }
     }
@@ -354,22 +379,38 @@ export const FhirValidation = () => {
 
   const handleSubmit =  async () => {
 
-    let userInputJson;
+    setState((prevState)=>({  //Clears the error messages from the previous validation
+      ...prevState,
+      globalErrorData: []
+    }))
+
+    let userInputJson:JSON;
     try {
       userInputJson = JSON.parse(input);
     } catch (error:any) {
       console.log(`Invalid JSON format: ${error.message}`)
-      setWindowView(true);
-      setGlobalErrorData([`Invalid JSON format: ${error.message}`])
+     // setWindowView(true);
+   //   setGlobalErrorData([`Invalid JSON format: ${error.message}`])
+      setState((prevState)=>({
+        ...prevState,
+        globalErrorData: [`Invalid JSON format: ${error.message}`],
+        windowView: true
+      }))
       return;
     }
 
     let errorData: string[] = await callBackend();
     if(errorData.length == 0){
       console.log("Validation Successful")
-      setExtensions([json()]);  //Removes the line highlighting if added
-      setWindowView(false);     //So that the alert boxes are not displayed
-      setValidationState(true);  //So that the the success alert is displayed
+      //setExtensions([json()]);  //Removes the line highlighting if added
+      setState((prevState)=>({
+        ...prevState,
+        extensions: [json()],
+        windowView: false,
+        validationState: true
+      }))
+    //  setWindowView(false);     //So that the alert boxes are not displayed
+    //  setValidationState(true);  //So that the the success alert is displayed
       return;
     }
     console.log(errorData);
@@ -386,17 +427,35 @@ export const FhirValidation = () => {
 
     //Highlighting the lines with errors
     if (!errorData && missingFields === false) {
-      setExtensions([json()]); //Hides the line highlights when succesful
+    //  setExtensions([json()]); //Hides the line highlights when succesful
+      setState((prevState)=>({
+        ...prevState,
+        extensions: [json()]
+      }))
+      
     } else {
-      setExtensions([classnameExt, json()]); //Highlights the lines when having errors
+    //  setExtensions([classnameExt, json()]); //Highlights the lines when having errors
+      setState((prevState)=>({
+        ...prevState,
+        extensions: [classnameExt, json()]
+      }))
     }
 
     if (errorData.length !== 0) {
-      setWindowView(true);
-      setValidationState(false);
+ //     setWindowView(true);
+      //setValidationState(false);
       displayErrorMessages(errorData);
-      setGlobalUserInputJson(userInputJson);
-      setGlobalErrorLines(errorLines);
+      //setGlobalUserInputJson(userInputJson);
+      //setGlobalErrorLines(errorLines);
+      setState((prevState)=>({
+        ...prevState,
+        globalUserInputJson: userInputJson,
+        globalErrorLines: errorLines,
+        windowView: true,
+        validationState: false
+      }))
+
+
     }
 
 
@@ -443,10 +502,10 @@ export const FhirValidation = () => {
     const errorLineNumber = match ? match[1] : null;
 
     const jumpToError= () => {
-      if(globalUserInputJson && errorLineNumber){
-      scrollToErrorLine(globalUserInputJson,parseInt(errorLineNumber));
+      if(state.globalUserInputJson && errorLineNumber){
+      scrollToErrorLine(state.globalUserInputJson, parseInt(errorLineNumber));
       
-      errorLines = globalErrorLines;
+      errorLines = state.globalErrorLines;  //Initializing the  errorLines varaibale after re render
 
       const selectedClassnameExt = classname({
         add: (lineNumber) => {
@@ -455,7 +514,11 @@ export const FhirValidation = () => {
             }         
         },
       });
-       setExtensions([classnameExt, json(), selectedClassnameExt]);
+     //  setExtensions([classnameExt, json(), selectedClassnameExt]);
+       setState((prevState)=>({
+        ...prevState,
+        extensions: [classnameExt, json(), selectedClassnameExt]
+        }))
       
       }
     }
@@ -515,7 +578,7 @@ export const FhirValidation = () => {
                     }
                   />
                 )}
-                 {globalErrorData.map((item, index) => (
+                 {state.globalErrorData && state.globalErrorData.map((item, index) => (
                     <DisplayErrorAlert message={item} key={index}/>
                  ))}
 
@@ -548,7 +611,7 @@ export const FhirValidation = () => {
       isDisabled={!isAuthenticated}
       executeButtonToolTipText="Validate FHIR Resource"
       acceptFileTypes=".txt"
-      extensions={extensions}
+      extensions={state.extensions}
     />
   );
 
@@ -608,16 +671,16 @@ export const FhirValidation = () => {
               sx={{
                 pr: 1,
                 pb: 1,
-                width: windowView ===true ?  "50%" : "85%",
+                width: state.windowView ===true ?  "50%" : "85%",
                 height: "100%",
               }}
               id="box-hl7-resource-box"
               aria-label="HL7 Resource Box"
             >
-             {validationState === true ? <DisplaySuccessAlert/> : null}
+             {state.validationState === true ? <DisplaySuccessAlert/> : null}
              {inputEditor}
             </Box>
-            {windowView === true ? changeView() : null}
+            {state.windowView === true ? changeView() : null}
           </>
         )}
       </Box>
