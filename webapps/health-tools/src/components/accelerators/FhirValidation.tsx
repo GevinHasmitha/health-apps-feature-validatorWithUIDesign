@@ -150,7 +150,7 @@ export const FhirValidation = () => {
       const patternMatch = data.match(pattern);
       if (patternMatch && patternMatch.length === 2){
       //  console.log(patternMatch[1]);
-        userInputJson= modifyInvalidValues(userInputJson, patternMatch[1]);
+      userInputJson = updateNestedKey(userInputJson, patternMatch[1]);
       }
      }
      return userInputJson;
@@ -164,36 +164,56 @@ export const FhirValidation = () => {
       if (patternMatch && patternMatch.length === 2){
         console.log(patternMatch[1]);
         console.log("After modifying invalid value")
-        userInputJson = modifyInvalidValues(userInputJson, patternMatch[1])
+        userInputJson = updateNestedKey(userInputJson, patternMatch[1]);
       }
     }
      return userInputJson;
     }
 
 
-  const modifyInvalidValues=(userInputJson:JSON, fieldvalue:string):JSON =>{
-    /*If the error is created by a value, below code is used to navigate to that field. Then it will directly 
-      add $$ to that value, so calling the addPrefixToMatchingKey function is not needed (this can be done because if the error
-      is with a value, the error message will contain the path, if it is with a key, we have to use the 
-      addPrefixToMatchingKey function to search for the location of the key in the json)*/
-    //const _ = require("lodash"); //Had to use a library because value can also be nested several levels deep
-
-    if (fieldvalue) {
-      try {
-            // Get the current value
-            const currentValue = _.get(userInputJson, fieldvalue);
-            // console.log("Current value: " + currentValue);
-            // console.log(JSON.stringify(userInputJson))
-            // Modify the value
-            const modifiedValue = "$$" + currentValue;
-            // Set the new value
-            _.set(userInputJson, fieldvalue, modifiedValue); //Appending $$ to the key cant be done because keys are immutable so have to create a new key and append it to the json
-      } catch (error) {
-        console.error(error);
+    const updateNestedKey = (obj: any, path: string) => {
+      const keys:any = path.split(/\.|\[(\d+)\]/).filter(Boolean);
+      let current = obj;
+      let parent = null;
+      let oldKey = null;
+    
+      for (let key of keys) {
+          if (current && (key in current || (Array.isArray(current) && !isNaN(key)))) {
+              parent = current;
+              oldKey = key;
+              current = current[key];
+          } else {
+              // Key not found, handle accordingly (return undefined or throw an error, for example)
+              return undefined;
+          }
       }
+    
+      if (parent && oldKey !== null) {
+          // Create a new object
+          const newObj:any = Array.isArray(parent) ? [] : {};
+          for (let key in parent) {
+            if (key === oldKey) {
+              newObj["$$" + key] = parent[key]; // Add $$ to the matching key
+             } else {
+              newObj[key] = parent[key];
+             }
+          }  
+  
+         if (keys.length === 1) {      //If the error is in the first level of the json
+            return newObj;
+         }else{                        //If the error is nested
+          // Find the parent of the parent
+            let grandParent = obj;
+            let parentKey = keys[keys.length - 2];
+            for (let key of keys.slice(0, -2)) {
+                grandParent = grandParent[key];
+            }
+            // Replace the parent with the new object in the grandparent
+            grandParent[parentKey] = newObj;
+         }
+      }
+      return obj;
     }
-    return userInputJson;
-  }
 
   const addPrefixToMatchingKey=(obj:any, searchString:string)=> {
     for (let key in obj) {
