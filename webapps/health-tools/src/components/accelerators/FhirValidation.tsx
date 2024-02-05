@@ -281,28 +281,95 @@ export const FhirValidation = () => {
 
   const displayErrorMessages = (errorData : string[]) => {
     let j=0;
-    for(let i=0; i< errorData.length; i++){
-      if (
-        errorData[i].includes("Missing required field") ||
-        errorData[i].includes("Resource type is invalid") ||
-        errorData[i].includes("Missing required Element") ||
-        errorData[i].includes("may be missing or invalid or it's value invalid")
-      ) {
-     //   setGlobalErrorData((prevState) => [...prevState, errorData[i]]);
-        setState((prevState) => ({
-          ...prevState,
-          globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, errorData[i]] : [errorData[i]]
-        }));
+
+    //======================================================Grouping missing fields===============================
+    let missingRootData: string[] = [];
+    let missingNestedData: { [key: string]: string[] } = {};
+    for(let i=0; i< errorData.length; i++){   
+
+      if (errorData[i].includes("Missing required field")){     
+          let match = errorData[i].match(/'([^']+)'/);
+          let fieldName:string ="";
+          if (match) {
+            fieldName=match[1];
+          }else{
+            console.log("Cannot extract missing field name form error message");
+            continue;
+          }
+
+          //Checks whether error is root level
+          if(fieldName.split('.').length === 1){
+            missingRootData.push(fieldName);
+
+          //If error not root level, creates a map of the missing fields for each level
+          }else{
+            let firstWord = fieldName.split('.')[0];
+            // If the first word is not already a key in missingData, add it with an empty array
+            if (!missingNestedData[firstWord]) {
+              missingNestedData[firstWord] = [];
+            }
+            // Add the field name to the array for this first word
+            missingNestedData[firstWord].push(fieldName);
+        }
+      }
+    }
+
+     //If missing field is at root level 
+     if(missingRootData.length !== 0){
+      let rootMessage="Missing required field(s); \n";
+      for (let value of missingRootData){
+        rootMessage = rootMessage +  value+"\n" ;
+      }
+      console.log(rootMessage);
+      setState((prevState)=>({
+        ...prevState,
+        globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, rootMessage] : [rootMessage]
+      }))
+     }
+     
+     //If missing field is at a seperate level 
+     if (Object.keys(missingNestedData).length !== 0){ 
+        for (let key in missingNestedData){     
+          let nestedMessage="";
+          nestedMessage = "Missing required field(s) in field '" +  key+"' ;\n" ;
+          for (let value of missingNestedData[key]){
+            nestedMessage = nestedMessage + value + "\n";
+          }
+        
+          setState((prevState)=>({
+            ...prevState,
+            globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, nestedMessage] : [nestedMessage]
+          }))
+      }
+    }
 
 
-      } else {
-        const errorMessage = `Line ${errorLines[j] + 1}) ${errorData[i]}`;
-     //  setGlobalErrorData((prevState) =>[...prevState,errorMessage]);
-        setState((prevState) => ({
-          ...prevState,
-          globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, errorMessage] : [errorMessage]
-        }));
-        j++;
+//====================================================================================================================
+
+    
+    for(let i=0; i< errorData.length; i++){  
+      if(!errorData[i].includes("Missing required field")){
+        if (
+          errorData[i].includes("Resource type is invalid") ||
+          errorData[i].includes("Missing required Element") ||
+          errorData[i].includes("may be missing or invalid or it's value invalid")
+        ) {
+        //   setGlobalErrorData((prevState) => [...prevState, errorData[i]]);
+          setState((prevState) => ({
+            ...prevState,
+            globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, errorData[i]] : [errorData[i]]
+          }));
+
+
+        } else {
+          const errorMessage = `Line ${errorLines[j] + 1}) ${errorData[i]}`;
+        //  setGlobalErrorData((prevState) =>[...prevState,errorMessage]);
+          setState((prevState) => ({
+            ...prevState,
+            globalErrorData: prevState.globalErrorData ? [...prevState.globalErrorData, errorMessage] : [errorMessage]
+          }));
+          j++;
+        }
       }
     }
   }
@@ -542,7 +609,10 @@ export const FhirValidation = () => {
           }
         >
         <AlertTitle>Error</AlertTitle>
+         {/* So that the new line characters are displayed */}
+         <div style={{whiteSpace: 'pre-line'}}>  
          {message}
+         </div>
       </Alert>
     </Collapse>
     )
