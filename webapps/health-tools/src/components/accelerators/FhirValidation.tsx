@@ -16,6 +16,7 @@ import { ReactNode } from 'react';
 import { Alert,AlertTitle } from '@mui/material';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
+import { useEffect } from 'react';
 
 interface State {
   input: string;
@@ -31,6 +32,7 @@ interface State {
   globalErrorLines: number[];
   windowView: boolean;
   validationState: boolean;
+  openAlertKey: number | null;
 }
 
 export const FhirValidation = () => {
@@ -51,7 +53,8 @@ export const FhirValidation = () => {
     globalUserInputJson: {},
     globalErrorLines: [],
     windowView: false,
-    validationState: false
+    validationState: false,
+    openAlertKey: null
   });
 
   const { state: authState, httpRequest } = useAuthContext();
@@ -556,10 +559,11 @@ export const FhirValidation = () => {
 
   interface DisplayAlertProps{
     message: string;
+    alertKey: number;
   }
 
-  const DisplayErrorAlert= ({ message }:DisplayAlertProps): ReactNode => {
-    const [open, setOpen] = React.useState(false);
+  const DisplayErrorAlert= ({ message, alertKey }:DisplayAlertProps): ReactNode => {
+    const [open, setOpen] = React.useState(state.openAlertKey === alertKey ? true : false);
 
     const match = message.match(/Line (\d+)/);   //Gets the line number from the error message
     const errorLineNumber = match ? match[1] : null;
@@ -585,17 +589,28 @@ export const FhirValidation = () => {
       }
     }
     return  (
-      <Collapse in={open} collapsedSize={75}>
+      <Collapse in={open} collapsedSize={65} style={{marginBottom: '12px' }}>
         <Alert
           severity="error"
           sx={{
             width: "95%",
-            margin: "10px",
             background: "#FFD6D6",
             boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.1)",
             cursor: "pointer",
+            borderRadius: "0px",
           }}
-          onClick={jumpToError}
+          onClick={(event) => {
+            jumpToError();
+            // When jumpToError is called, it will re render the component, so the open state will be initialized
+            // to false so that the alert is collapsed. So, i set the key to the alertKey so that the open state 
+            // is initialized to true when the state key and the alertKey are the same so that only the required
+            // alert is expanded on alert click.
+            setState((prevState)=>({
+              ...prevState,
+              openAlertKey: alertKey  
+              }))
+          }}
+          
           action={
             <Button color="inherit"
               size="small"
@@ -644,7 +659,7 @@ export const FhirValidation = () => {
                   />
                 )}
                  {state.globalErrorData && state.globalErrorData.map((item, index) => (
-                    <DisplayErrorAlert message={item} key={index}/>
+                    <DisplayErrorAlert message={item} alertKey={index}/>
                  ))}
 
               </>
