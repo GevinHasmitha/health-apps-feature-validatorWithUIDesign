@@ -530,6 +530,25 @@ export const FhirValidation = () => {
 
 
  //===============================================================
+const getAlertTitle = (alertMessage: string): string => {
+  if(alertMessage.includes("Resource type is invalid")){
+    return "Unknown Resource Type";
+  }else if(alertMessage.includes("Missing required Element")){
+    return "Missing Required Field";
+  }else if(alertMessage.includes("Missing required field")){
+    return "Missing Required Field";
+  }else if(alertMessage.includes("Invalid field")){
+    return "Unexpected Field";
+  }else if(alertMessage.includes("Invalid value of field")){
+    return "Invalid Value";
+  }else if(alertMessage.includes("Invalid pattern (constraint)")){
+    return "Pattern Mismatch";
+  }else if(alertMessage.includes("may be missing or invalid or it's value invalid")){
+    return "Multitype Error";
+  }
+  return "Error";
+}
+
   const DisplaySuccessAlert = () => {
     const [open, setOpen] = React.useState(true);
     return (
@@ -550,7 +569,6 @@ export const FhirValidation = () => {
           </Button>
         }
         >
-        <AlertTitle>Success</AlertTitle>
           Validation Successful!
       </Alert>
       </Collapse>
@@ -623,7 +641,8 @@ export const FhirValidation = () => {
             </Button>
           }
         >
-        <AlertTitle>Error</AlertTitle>
+
+        <AlertTitle>{getAlertTitle(message)}</AlertTitle>
          {/* So that the new line characters are displayed */}
          <div style={{whiteSpace: 'pre-line'}}>  
          {message}
