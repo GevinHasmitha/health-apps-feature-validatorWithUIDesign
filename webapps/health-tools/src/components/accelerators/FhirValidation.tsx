@@ -16,7 +16,6 @@ import { ReactNode } from 'react';
 import { Alert,AlertTitle } from '@mui/material';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
-import { useEffect } from 'react';
 
 interface State {
   input: string;
@@ -457,9 +456,10 @@ export const FhirValidation = () => {
 
   const handleSubmit =  async () => {
 
-    setState((prevState)=>({  //Clears the error messages from the previous validation
+    setState((prevState)=>({  
       ...prevState,
-      globalErrorData: []
+      globalErrorData: [],   //Clears the error messages from the previous validation
+      openAlertKey: null     //So that the alert is collapsed when the input is changed
     }))
 
     let userInputJson:JSON;
@@ -710,6 +710,10 @@ const getAlertTitle = (alertMessage: string): string => {
       executeButtonToolTipText="Validate FHIR Resource"
       acceptFileTypes=".txt"
       extensions={state.extensions}
+      basicSetupOptions={{
+        highlightActiveLine:false,
+        highlightActiveLineGutter:false
+      }}
     />
   );
   return (

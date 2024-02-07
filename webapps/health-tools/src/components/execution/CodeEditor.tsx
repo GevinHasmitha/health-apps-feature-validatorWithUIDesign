@@ -9,8 +9,6 @@ import { DownloadIcon } from "./DownloadIcon";
 import { ExecuteButton } from "./ExecuteButton";
 import { UploadIcon } from "./UploadIcon";
 
-// import { Extension } from '@codemirror/state';
-
 interface CodeEditorProps {
   id?: string;
   title: string;
@@ -35,6 +33,7 @@ interface CodeEditorProps {
   executeButtonToolTipText?: string;
   acceptFileTypes?: string;
   extensions?: any;
+  basicSetupOptions?: Record<string, boolean>;
 }
 
 export const CodeEditor = ({
@@ -60,8 +59,8 @@ export const CodeEditor = ({
   isLoading = false,
   executeButtonToolTipText = "Execute",
   acceptFileTypes = ".txt",
-  extensions=[]
-
+  extensions=[],
+  basicSetupOptions
 }: CodeEditorProps) => {
   const handleDownload = (content: string, filename: string) => {
     if (content != null) {
@@ -165,12 +164,11 @@ export const CodeEditor = ({
           value={value}
           height={height}
           theme={darkMode ? aura : xcodeLight}
-          // extensions={[extensions,langExtensions[fileType]()]}
           extensions={extensions}
-
           onChange={onChange}
           readOnly={readOnly}
           color="text.primary"
+          basicSetup={basicSetupOptions}
         />
       </Box>
     </Box>
