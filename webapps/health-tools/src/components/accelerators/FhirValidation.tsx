@@ -16,6 +16,7 @@ import { ReactNode } from 'react';
 import { Alert,AlertTitle } from '@mui/material';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 interface State {
   input: string;
@@ -173,6 +174,32 @@ export const FhirValidation = () => {
     }
 
 
+    const validateArrayElements = (errorData:string[], userInputJson:JSON):[JSON,string[]] => {
+      let errorMap = new Map<string, string>();
+    
+      for (let i=0; i<errorData.length; i++){
+        let pattern = /Invalid array element '([^']*)'/;
+        const patternMatch = errorData[i].match(pattern);
+        if (patternMatch && patternMatch.length === 2){
+          let newArrayElementPath  = patternMatch[1].replace(/\[\d+\]$/, "");  //Removes the last [x] from the path
+    
+          // Combine error messages with the same newArrayElementPath
+          if (errorMap.has(newArrayElementPath)) {
+            errorMap.set(newArrayElementPath, errorMap.get(newArrayElementPath) + "\n\n" + errorData[i]);
+          } else {
+            errorMap.set(newArrayElementPath, errorData[i]);
+          }
+          userInputJson = updateNestedKey(userInputJson, newArrayElementPath);
+        }else{
+          errorMap.set("key"+i, errorData[i]);
+        }
+      }
+      let combinedErrorData = Array.from(errorMap.values());
+      console.log(combinedErrorData);
+      return [userInputJson, combinedErrorData];
+
+    }
+
     const updateNestedKey = (obj: any, path: string) => {
       const keys:any = path.split(/\.|\[(\d+)\]/).filter(Boolean);
       let current = obj;
@@ -185,8 +212,8 @@ export const FhirValidation = () => {
               oldKey = key;
               current = current[key];
           } else {
-              // Key not found, handle accordingly (return undefined or throw an error, for example)
-              return undefined;
+              console.log("Key not found")
+              return obj;
           }
       }
     
@@ -354,7 +381,7 @@ export const FhirValidation = () => {
         if (
           errorData[i].includes("Resource type is invalid") ||
           errorData[i].includes("Missing required Element") ||
-          errorData[i].includes("may be missing or invalid or it's value invalid")
+          errorData[i].includes("should be of type value[x] or url[x] where x is a valid fhir data type")
         ) {
         //   setGlobalErrorData((prevState) => [...prevState, errorData[i]]);
           setState((prevState) => ({
@@ -496,6 +523,10 @@ export const FhirValidation = () => {
 
     userInputJson = validateDateTime(errorData, userInputJson);
 
+    let arrayData = validateArrayElements(errorData, userInputJson);
+    userInputJson = arrayData[0];
+    errorData = arrayData[1];
+
     findErrorLines(userInputJson, errorLines);
 
     //Highlighting the lines with errors
@@ -543,7 +574,7 @@ const getAlertTitle = (alertMessage: string): string => {
     return "Invalid Value";
   }else if(alertMessage.includes("Invalid pattern (constraint)")){
     return "Pattern Mismatch";
-  }else if(alertMessage.includes("may be missing or invalid or it's value invalid")){
+  }else if(alertMessage.includes("should be of type value[x] or url[x] where x is a valid fhir data type")){
     return "Multitype Error";
   }
   return "Error";
@@ -637,7 +668,7 @@ const getAlertTitle = (alertMessage: string): string => {
                 open ? setOpen(false) : setOpen(true);
               }}
             >
-              Expand
+              <ExpandMoreIcon style={{ transform: open ? 'rotate(180deg)' : 'none' }} />
             </Button>
           }
         >
