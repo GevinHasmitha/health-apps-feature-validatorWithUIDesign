@@ -645,7 +645,7 @@ const getAlertTitle = (alertMessage: string): string => {
           severity="error"
           sx={{
             width: "95%",
-            background: "#FFD6D6",
+            background: open? "#FDCEC6  " : "#FFD6D6",
             boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.1)",
             cursor: "pointer",
             borderRadius: "0px",

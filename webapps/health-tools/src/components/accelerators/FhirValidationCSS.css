@@ -1,6 +1,6 @@
 .errorMarker{
-    background-color: rgb(255, 183, 183);
+    background-color: #FFD6D6;
   }
 .selectedError{
-  background-color:rgb(255, 120, 120);
+  background-color:#FF9898;
 }
