@@ -574,6 +574,8 @@ const getAlertTitle = (alertMessage: string): string => {
     return "Invalid Value";
   }else if(alertMessage.includes("Invalid pattern (constraint)")){
     return "Pattern Mismatch";
+  }else if(alertMessage.includes("Invalid array element")){
+    return "Invalid Value";
   }else if(alertMessage.includes("should be of type value[x] or url[x] where x is a valid fhir data type")){
     return "Multitype Error";
   }
